@@ -5,7 +5,7 @@
   "name": "StrClient",
   "description": "A client with a resource pack.",
   "authors": ["strongspy"],
-  "license": "EULA",
+  "license": "CC0",
   "environment": "client",
   "entrypoints": {
     "client": [
