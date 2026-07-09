@@ -1,0 +1,17 @@
+# Gradle
+.gradle/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Minecraft Run Directory
+run/
+
+# Build Output
+build/
+out/
+
+# Logs
+logs/
+*.log

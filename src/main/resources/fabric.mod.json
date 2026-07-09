@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "strclient",
+  "version": "${version}",
+  "name": "StrClient",
+  "description": "A client with a resource pack.",
+  "authors": ["strongspy"],
+  "license": "EULA",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.strongspy.strclient.StrClientMod"
+    ]
+  },
+  "mixins": [
+    "strclient.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.5",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

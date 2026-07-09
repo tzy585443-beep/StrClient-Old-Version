@@ -1,0 +1,23 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "minecraft:item/totem_of_undying"
+  },
+    "display": {
+        "firstperson_lefthand": {
+            "rotation": [ 0, -30, 0 ],
+            "translation": [ 11, -3, -10 ],
+            "scale": [ 0.6, 0.6, 0.6 ]
+        },
+        "firstperson_righthand": {
+            "rotation": [ 0, -30, 0 ],
+            "translation": [ 11, -3, -10 ],
+            "scale": [ 0.6, 0.6, 0.6 ]
+        },
+        "fixed": {
+          "rotation": [ 0, 180, 0 ],
+          "translation": [ 0, 0, 0 ],
+          "scale": [ 0.3, 0.3, 0.3 ]
+      }
+    }
+}

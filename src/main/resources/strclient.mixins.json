@@ -1,0 +1,26 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.strongspy.strclient.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "CapePatchMixin",
+    "TitleScreenBackgroundMixin",
+    "SplashOverlayMixin",
+    "InventoryBackgroundMixin",
+    "WorldRendererMixin",
+    "ScreenMixin",
+    "SplashOverlayLoadingMixin",
+    "TitleScreenMixin",
+    "StrClientTitleScreenMixin",
+    "StrClientUnderwaterMixin",
+    "BipedEntityModelMixin",
+    "HeldItemRendererMixin",
+    "TotalColorTransformerMixin",
+    "FoliageColorsMixin",
+    "SmoothCameraMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
