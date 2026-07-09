@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>StrClient 动态卡密生成器 / Keygen</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0e0e10;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            padding: 30px;
+            width: 420px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: center;
+            position: relative;
+        }
+        /* 语言切换按钮区域 */
+        .lang-switch {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+        }
+        .lang-btn {
+            background: #27272a;
+            border: 1px solid #3f3f46;
+            color: #a1a1aa;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .lang-btn.active {
+            background: #a855f7;
+            border-color: #c084fc;
+            color: #fff;
+        }
+        .lang-btn:hover:not(.active) {
+            border-color: #a855f7;
+            color: #fff;
+        }
+        h2 { margin-top: 10px; color: #a855f7; font-weight: 600; letter-spacing: 1px; }
+        label { display: block; text-align: left; margin: 15px 0 5px; font-size: 14px; color: #a1a1aa; }
+        select {
+            width: 100%; padding: 10px; border-radius: 6px; background: #27272a;
+            border: 1px solid #3f3f46; color: #fff; font-size: 16px; outline: none;
+        }
+        .result-box {
+            background: #09090b; border: 1px dashed #a855f7; border-radius: 6px;
+            padding: 15px; margin-top: 25px; font-family: monospace; font-size: 18px;
+            letter-spacing: 2px; color: #e4e4e7; word-break: break-all; cursor: pointer;
+            position: relative; transition: background 0.2s;
+        }
+        .result-box:hover { background: #14141b; }
+        .btn {
+            width: 100%; background: #a855f7; color: #fff; border: none; padding: 12px;
+            border-radius: 6px; font-size: 16px; font-weight: bold; margin-top: 20px;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .btn:hover { background: #c084fc; }
+        .info { font-size: 12px; color: #71717a; margin-top: 15px; }
+        .toast {
+            position: fixed; bottom: 20px; background: #22c55e; color: #fff;
+            padding: 10px 20px; border-radius: 20px; font-size: 14px;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="lang-switch">
+        <button class="lang-btn" id="btn-zh" onclick="switchLanguage('zh')">ZH</button>
+        <button class="lang-btn" id="btn-en" onclick="switchLanguage('en')">EN</button>
+    </div>
+
+    <h2 id="ui-title">StrClient Keygen</h2>
+    <p id="ui-subtitle" style="color:#71717a; font-size:14px; margin-bottom:20px;">动态卡密算法验证系统 (10分钟时效)</p>
+    
+    <label for="typeSelect" id="ui-label">选择卡密类型：</label>
+    <select id="typeSelect" onchange="generateKey()">
+        <option value="D|DAY" id="opt-day">天卡 (1 Day)</option>
+        <option value="M|MONTH" id="opt-month">月卡 (1 Month)</option>
+        <option value="Y|YEAR" id="opt-year">年卡 (1 Year)</option>
+        <option value="E|ETERNAL" id="opt-eternal">永久卡 (Eternal - 无限期)</option>
+    </select>
+
+    <div class="result-box" id="keyDisplay" onclick="copyToClipboard()">Loading...</div>
+    
+    <button class="btn" id="ui-btn-refresh" onclick="generateKey()">手动刷新卡密</button>
+    
+    <div class="info" id="timerDisplay">Remaining time: --:--</div>
+</div>
+
+<div class="toast" id="toast">复制成功！</div>
+
+<script>
+    const SALT = "StrClient_Secure_Salt_2026";
+    const TIME_STEP_MS = 600000; 
+    
+    // 🌍 双语本地文本映射表
+    const i18n = {
+        zh: {
+            title: "StrClient Keygen",
+            subtitle: "动态卡密算法验证系统 (10分钟时效)",
+            label: "选择卡密类型：",
+            optDay: "天卡 (1 Day)",
+            optMonth: "月卡 (1 Month)",
+            optYear: "年卡 (1 Year)",
+            optEternal: "永久卡 (Eternal - 无限期)",
+            btnRefresh: "手动刷新卡密",
+            timerPrefix: "本轮卡密剩余有效时间: ",
+            toast: "复制成功！"
+        },
+        en: {
+            title: "StrClient Keygen",
+            subtitle: "Dynamic License Verification System (10-Min Expiry)",
+            label: "Select Key Type:",
+            optDay: "Day Pass (1 Day)",
+            optMonth: "Month Pass (1 Month)",
+            optYear: "Year Pass (1 Year)",
+            optEternal: "Eternal Pass (Lifetime)",
+            btnRefresh: "Manually Refresh Key",
+            timerPrefix: "Key Valid Remaining Time: ",
+            toast: "Copied to clipboard!"
+        }
+    };
+
+    // 默认语言初始化（优先读取本地缓存，无缓存则根据浏览器主语言智能匹配，保底英文）
+    let currentLang = localStorage.getItem("strclient_lang") || 
+                      (navigator.language.startsWith("zh") ? "zh" : "en");
+
+    // 切换语言调度核心
+    function switchLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem("strclient_lang", lang); // 持久化记录
+        updateUI();
+    }
+
+    // 将选定语言的文字灌入对应的 DOM 节点
+    function updateUI() {
+        const langData = i18n[currentLang];
+        
+        // 更新普通节点
+        document.getElementById("ui-title").innerText = langData.title;
+        document.getElementById("ui-subtitle").innerText = langData.subtitle;
+        document.getElementById("ui-label").innerText = langData.label;
+        document.getElementById("ui-btn-refresh").innerText = langData.btnRefresh;
+        
+        // 更新 Select 下拉框中的单项
+        document.getElementById("opt-day").innerText = langData.optDay;
+        document.getElementById("opt-month").innerText = langData.optMonth;
+        document.getElementById("opt-year").innerText = langData.optYear;
+        document.getElementById("opt-eternal").innerText = langData.optEternal;
+
+        // 切换语言按钮的亮起状态（Active Class）
+        document.getElementById("btn-zh").classList.toggle("active", currentLang === 'zh');
+        document.getElementById("btn-en").classList.toggle("active", currentLang === 'en');
+
+        // 同步刷新时间倒计时和卡密密文结构
+        updateTimer();
+    }
+
+    async function sha256(message) {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        return new Uint8Array(hashBuffer);
+    }
+
+    async function generateKey() {
+        const selectValue = document.getElementById("typeSelect").value;
+        const [typeChar, typeStr] = selectValue.split("|");
+
+        const currentTimestamp = Date.now();
+        const currentInterval = Math.floor(currentTimestamp / TIME_STEP_MS);
+
+        const message = currentInterval + SALT + typeStr;
+        const hashBytes = await sha256(message);
+
+        const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".split("");
+        let rawKey = typeChar;
+
+        for (let i = 1; i < 25; i++) {
+            let byteValue = hashBytes[i % hashBytes.length] & 0xFF;
+            let index = (byteValue + i) % alphabet.length;
+            rawKey += alphabet[index];
+        }
+
+        let formattedKey = "";
+        for (let i = 0; i < rawKey.length; i++) {
+            if (i > 0 && i % 5 === 0) {
+                formattedKey += "-";
+            }
+            formattedKey += rawKey[i];
+        }
+
+        document.getElementById("keyDisplay").innerText = formattedKey;
+    }
+
+    function updateTimer() {
+        const now = Date.now();
+        const remainingMs = TIME_STEP_MS - (now % TIME_STEP_MS);
+        const mins = Math.floor(remainingMs / 1000 / 60);
+        const secs = Math.floor((remainingMs / 1000) % 60);
+        
+        const prefix = i18n[currentLang].timerPrefix;
+        document.getElementById("timerDisplay").innerText = 
+            `${prefix}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+        if (mins === 9 && secs === 59) {
+            generateKey();
+        }
+    }
+
+    function copyToClipboard() {
+        const text = document.getElementById("keyDisplay").innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            const toast = document.getElementById("toast");
+            toast.innerText = i18n[currentLang].toast; // 复制气泡自适应语言
+            toast.style.opacity = "1";
+            setTimeout(() => toast.style.opacity = "0", 1500);
+        });
+    }
+
+    // 流程启动
+    updateUI();
+    generateKey();
+    setInterval(updateTimer, 1000);
+</script>
+
+</body>
+</html>
